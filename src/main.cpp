@@ -6,13 +6,13 @@
 Esp32PcntEncoder encoders[2];
 Pidcontroller pid_controller;
 
-// constexpr uint8_t MOTOR_PIN_PWM = 32;
-// constexpr uint8_t MOTOR_PIN_in1 = 25;
-// constexpr uint8_t MOTOR_PIN_in2 = 33;
-
 constexpr uint8_t MOTOR_PIN_PWM = 14;
-constexpr uint8_t MOTOR_PIN_in1 = 26;
-constexpr uint8_t MOTOR_PIN_in2 = 27;
+constexpr uint8_t MOTOR_PIN_in1 = 27;
+constexpr uint8_t MOTOR_PIN_in2 = 26;
+
+// constexpr uint8_t MOTOR_PIN_PWM = 32;
+// constexpr uint8_t MOTOR_PIN_in1 = 33;
+// constexpr uint8_t MOTOR_PIN_in2 = 25;
 
 constexpr uint8_t STBY = 13; // 左轮电机ID为0，右轮电机ID为1
 constexpr uint8_t PWM_CHANNEL = 0;
@@ -44,7 +44,8 @@ void setup() {
     Serial.begin(115200);
     // 初始化编码器
     //左轮编码器
-    encoders[0].init(0, 19, 18); 
+    encoders[0].init(0, 23, 22); 
+    // encoders[0].init(0, 18, 19); 
     pinMode(MOTOR_PIN_PWM, OUTPUT);
     pinMode(MOTOR_PIN_in1, OUTPUT);
     pinMode(MOTOR_PIN_in2, OUTPUT);
@@ -60,22 +61,22 @@ void setup() {
     pid_controller.update_target(target_linear_speed);
 }
 void loop() {
-    last_ticks = encoders[0].getTicks();
+    // last_ticks = encoders[0].getTicks();
     Serial.printf("Left Encoder Ticks: %lld\n", last_ticks);
     // 获取编码器计数
-    // last_ticks = encoders[0].getTicks();
-    // uint64_t dt = millis() - last_time;
-    // if(dt == 0)
-    //     return;
-	// delta_ticks = encoders[0].getTicks() - last_ticks;
-	// current_speed[0] = float(delta_ticks * 0.00503f) / dt * 1000; // mm/s
-	// last_time = millis();
+    uint64_t dt = millis() - last_time;
+    if(dt == 0)
+    return;
+	delta_ticks = encoders[0].getTicks() - last_ticks;
+    last_ticks = encoders[0].getTicks();
+	current_speed[0] = float(delta_ticks * 0.08785f) / dt * 1000; // mm/s
+	last_time = millis();
 	
 
-    // Serial.printf("Speed: %f mm/s\n", current_speed[0]);
+    Serial.printf("Speed: %f mm/s\n", current_speed[0]);
     // // 打印编码器计数
 
-    // pwm_set_speed(pid_controller.update(current_speed[0]));
-    pwm_set_speed(50);
+    pwm_set_speed(pid_controller.update(current_speed[0]));
+    // pwm_set_speed(50);
     delay(50);
 }
