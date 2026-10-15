@@ -73,10 +73,10 @@ void loop() {
 	last_time = millis();
 	
 
-    Serial.printf("Speed: %f mm/s\n", current_speed[0]);
+    // Serial.printf("Speed: %f mm/s\n", current_speed[0]);
     // // 打印编码器计数
 
-    pwm_set_speed(pid_controller.update(current_speed[0]));
-    // pwm_set_speed(50);
+    // pwm_set_speed(pid_controller.update(current_speed[0]));
+    pwm_set_speed(200);
     delay(50);
 }
