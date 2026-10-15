@@ -11,12 +11,13 @@ private:
     uint8_t ledc_channel;
     uint8_t gpioIn1;
     uint8_t gpioIn2;
-    uint8_t en_io;
+    uint8_t pwm_io;
+    uint8_t stby_io;
 
 public:
     Esp32McpwmMotor() = default;
     ~Esp32McpwmMotor() = default;
-    void attachMotor(uint8_t en_io, uint8_t id, uint8_t gpioIn1, uint8_t gpioIn2);
+    void attachMotor(uint8_t pwm_io, uint8_t id, uint8_t gpioIn1, uint8_t gpioIn2, uint8_t stby_io);
     void stopMotor(int8_t motorId = -1);
     void updateMotorSpeed(int8_t wheel_id, int16_t pwmValue);
 };

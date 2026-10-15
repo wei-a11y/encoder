@@ -1,48 +1,52 @@
 #include "Esp32McpwmMotor.h"
 
 /** *绑定电机引脚和LEDC通道
-* en_io: 电机使能引脚即L298N的ENA或ENB引脚
+* pwm_io: 电机使能引脚即L298N的ENA或ENB引脚
 * id: 电机ID（0或1）区别左右轮
 * gpioIn1: 电机输入1引脚
 * gpioIn2: 电机输入2引脚
 * 该函数会初始化LEDC通道并绑定到gpioIn1引脚，同时
-* 设置gpioIn2为输出引脚并初始化为低电平，最后设置en_io为输出引脚并初始化为低电平
+* 设置gpioIn2为输出引脚并初始化为低电平，最后设置pwm_io为输出引脚并初始化为低电平
 */
-void Esp32McpwmMotor::attachMotor(uint8_t en_io, uint8_t id, uint8_t gpioIn1, uint8_t gpioIn2)
+void Esp32McpwmMotor::attachMotor(uint8_t pwm_io, uint8_t id, uint8_t gpioIn1, uint8_t gpioIn2, uint8_t stby_io)
 {
-    this->en_io = en_io;
+    this->pwm_io = pwm_io;
     this->gpioIn1 = gpioIn1;
     this->gpioIn2 = gpioIn2;
+    this->stby_io = stby_io;
     ledc_channel = id + 8;
     // 初始化LEDC通道
     ledcSetup(ledc_channel, ledc_freq, ledc_res);
     // 绑定LEDC通道
-    ledcAttachPin(gpioIn1, ledc_channel);
+    ledcAttachPin(pwm_io, ledc_channel);
     
+    pinMode(gpioIn1, OUTPUT);
+    digitalWrite(gpioIn1, LOW);
     pinMode(gpioIn2, OUTPUT);
     digitalWrite(gpioIn2, LOW);
-    pinMode(en_io, OUTPUT);
-    digitalWrite(en_io, LOW);
+    // pinMode(pwm_io, OUTPUT);
+    // digitalWrite(pwm_io, LOW);
 }
 
 // 电机执行指令，传入轮子ID和PWM值
 void Esp32McpwmMotor::updateMotorSpeed(int8_t wheel_id, int16_t pwmValue)
 {
-    int speed = abs(pwmValue) * 255 / 100;
+    // int speed = abs(pwmValue) * 255 / 100;
+    uint8_t duty = static_cast<uint8_t>(abs(pwmValue) * 255 / 100);
+    ledcWrite(ledc_channel, duty);
     if (pwmValue >= 0) {
+        digitalWrite(gpioIn1, HIGH);
         digitalWrite(gpioIn2, LOW);
-        ledcWrite(ledc_channel, speed);
-        digitalWrite(en_io, HIGH);
     } else {
+        digitalWrite(gpioIn1, LOW);
         digitalWrite(gpioIn2, HIGH);
-        ledcWrite(ledc_channel, 255 - speed);
-        digitalWrite(en_io, HIGH);
     }
 }
 // 停止电机
 void Esp32McpwmMotor::stopMotor(int8_t motorId)
 {
-    digitalWrite(en_io, LOW);
+    digitalWrite(stby_io, LOW);
+    digitalWrite(gpioIn1, LOW);
     digitalWrite(gpioIn2, LOW);
     ledcWrite(ledc_channel, 0);
 }

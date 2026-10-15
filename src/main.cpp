@@ -10,10 +10,6 @@ constexpr uint8_t MOTOR_PIN_PWM = 14;
 constexpr uint8_t MOTOR_PIN_in1 = 27;
 constexpr uint8_t MOTOR_PIN_in2 = 26;
 
-// constexpr uint8_t MOTOR_PIN_PWM = 32;
-// constexpr uint8_t MOTOR_PIN_in1 = 33;
-// constexpr uint8_t MOTOR_PIN_in2 = 25;
-
 constexpr uint8_t STBY = 13; // 左轮电机ID为0，右轮电机ID为1
 constexpr uint8_t PWM_CHANNEL = 0;
 constexpr uint32_t PWM_FREQ = 20000;
@@ -45,7 +41,6 @@ void setup() {
     // 初始化编码器
     //左轮编码器
     encoders[0].init(0, 23, 22); 
-    // encoders[0].init(0, 18, 19); 
     pinMode(MOTOR_PIN_PWM, OUTPUT);
     pinMode(MOTOR_PIN_in1, OUTPUT);
     pinMode(MOTOR_PIN_in2, OUTPUT);
@@ -71,12 +66,8 @@ void loop() {
     last_ticks = encoders[0].getTicks();
 	current_speed[0] = float(delta_ticks * 0.08785f) / dt * 1000; // mm/s
 	last_time = millis();
-	
 
-    // Serial.printf("Speed: %f mm/s\n", current_speed[0]);
-    // // 打印编码器计数
-
-    // pwm_set_speed(pid_controller.update(current_speed[0]));
-    pwm_set_speed(200);
+    pwm_set_speed(pid_controller.update(current_speed[0]));
+    // pwm_set_speed(200);
     delay(50);
 }
