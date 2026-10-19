@@ -10,19 +10,20 @@ constexpr uint8_t MOTOR_PIN_PWM = 14;
 constexpr uint8_t MOTOR_PIN_in1 = 27;
 constexpr uint8_t MOTOR_PIN_in2 = 26;
 
-constexpr uint8_t STBY = 13; // 左轮电机ID为0，右轮电机ID为1
+constexpr uint8_t STBY = 13; // 左轮电机ID为0，右轮电机ID为1，用于轮趣电机
 constexpr uint8_t PWM_CHANNEL = 0;
 constexpr uint32_t PWM_FREQ = 20000;
 constexpr uint8_t PWM_RES = 8;
 
 float target_linear_speed = 200.0f; // 目标线速度 mm/s
 float target_angular_speed = 0.0f; // 目标角速度 rad/s
-float out_left_speed ;
-float out_right_speed ;
 int64_t last_ticks = 0;
-int64_t delta_ticks;
+int64_t delta_ticks=0;
 int64_t last_time = 0;
 float current_speed[2];
+// 用于运动学
+float out_left_speed ;
+float out_right_speed ;
 
 
 unsigned char i = 128;  // 初始速度值
@@ -33,7 +34,7 @@ void pwm_init() {
 void pwm_set_speed(uint8_t speed) {
     // 反向映射:speed 越大,占空比越大,电压越高
     // 如果想要反向(speed 越小电压越高),改为: ledcWrite(PWM_CHANNEL, 255 - speed);
-    digitalWrite(STBY, HIGH); // 使能电机
+    digitalWrite(STBY, HIGH); // 使能电机(仅轮趣电机需要)
     ledcWrite(PWM_CHANNEL, speed);
 }
 void setup() {
@@ -51,23 +52,29 @@ void setup() {
     digitalWrite(STBY, LOW); // 使能电机
     pwm_init();
     
-    pid_controller.update_pid(0.09, 0.06, 0.01);
+    pid_controller.update_pid(0.2, 0.06, 0.0);
     pid_controller.out_limit(-100, 100);
     pid_controller.update_target(target_linear_speed);
 }
 void loop() {
-    // last_ticks = encoders[0].getTicks();
-    Serial.printf("Left Encoder Ticks: %lld\n", last_ticks);
     // 获取编码器计数
+    // last_ticks = encoders[0].getTicks();
+    // Serial.printf("Left Encoder Ticks: %lld\n", last_ticks);
+
+    // pwm控制
+    // pwm_set_speed(200);
+    
+    // pid闭环控制
     uint64_t dt = millis() - last_time;
     if(dt == 0)
-    return;
+        return;
 	delta_ticks = encoders[0].getTicks() - last_ticks;
     last_ticks = encoders[0].getTicks();
 	current_speed[0] = float(delta_ticks * 0.08785f) / dt * 1000; // mm/s
 	last_time = millis();
-
-    pwm_set_speed(pid_controller.update(current_speed[0]));
-    // pwm_set_speed(200);
+    float pid = pid_controller.update(current_speed[0]) * 2.55;
+    pwm_set_speed(pid);
+    Serial.printf("pid_out:%f\n", pid);
+    //
     delay(50);
 }
